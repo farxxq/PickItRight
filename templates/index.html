@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Comparison</title>
+    <style>
+        /* Basic styling for the product display */
+        .product-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .product {
+            text-align: center;
+        }
+
+        .product img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .best-product {
+            background-color: #f8f8f8;
+            border: 2px solid #00cc00;
+            padding: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .best-product h3 {
+            color: #00cc00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Best Product</h1>
+
+    <form id="categoryForm">
+        <label for="category">Select Category:</label>
+        <select id="category" name="category">
+            <option value="A">Category A</option>
+            <option value="B">Category B</option>
+            <option value="C">Category C</option>
+            <option value="D">Category D</option>
+            <option value="E">Category E</option>
+        </select>
+        <button type="submit">Show Products</button>
+    </form>
+
+    <div id="productDisplay" class="product-container"></div>
+
+    <div id="bestProduct" class="best-product"></div>
+
+    <script>
+        // Function to fetch product data based on selected category
+        document.getElementById('categoryForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const category = document.getElementById('category').value;
+
+            fetch('/get_category', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ category: category })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const productDisplay = document.getElementById('productDisplay');
+                const bestProductDiv = document.getElementById('bestProduct');
+                productDisplay.innerHTML = '';  // Clear previous data
+
+                let bestProduct = null;
+
+                // Display the products in a horizontal row
+                data.category_data.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.classList.add('product');
+                    
+                    const productImage = document.createElement('img');
+                    productImage.src = product.product_image;
+                    productDiv.appendChild(productImage);
+
+                    const productRating = document.createElement('p');
+                    productRating.textContent = `Rating: ${product.avg_rating}`;
+                    productDiv.appendChild(productRating);
+
+                    const productReviews = document.createElement('p');
+                    productReviews.textContent = `Reviews: ${product.total_reviews}`;
+                    productDiv.appendChild(productReviews);
+
+                    productDisplay.appendChild(productDiv);
+
+                    // Determine the best product
+                    if (!bestProduct || product.avg_rating > bestProduct.avg_rating) {
+                        bestProduct = product;
+                    }
+                });
+
+                // Display the best product
+                if (bestProduct) {
+                    bestProductDiv.innerHTML = `<h3>Best Product: ${bestProduct.subcategory}</h3>
+                        <img src="${bestProduct.product_image}" alt="${bestProduct.subcategory}">
+                        <p>Rating: ${bestProduct.avg_rating}</p>
+                        <p>Reviews: ${bestProduct.total_reviews}</p>`;
+                }
+            })
+            .catch(error => console.error('Error fetching category data:', error));
+        });
+    </script>
+</body>
+</html>
